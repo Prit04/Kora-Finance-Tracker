@@ -26,9 +26,19 @@ def add_expense():
     print(f"✅ Saved ${amount} under {category}!")
 
 
-def show_chart(filter_month=False):
+def show_chart(filter_type="all"):
+    """
+    filter_type options: "all", "current", "choose"
+    """
     categories = {}
-    current_month = datetime.now().strftime("%Y-%m")
+    target_prefix = ""
+
+    if filter_type == "current":
+        target_prefix = datetime.now().strftime("%Y-%m")
+    elif filter_type == "choose":
+        year = input("Enter year (YYYY, e.g., 2025): ")
+        month = input("Enter month (MM, e.g., 01 to 12): ")
+        target_prefix = f"{year}-{month}"
 
     try:
         with open(FILE_NAME, mode='r') as file:
@@ -36,20 +46,19 @@ def show_chart(filter_month=False):
             for row in reader:
                 date_str, amount, cat = row[0], float(row[1]), row[2]
 
-                # --- DATE FILTERING ---
-                if filter_month and not date_str.startswith(current_month):
+                # Filter logic
+                if filter_type != "all" and not date_str.startswith(target_prefix):
                     continue
 
                 categories[cat] = categories.get(cat, 0) + amount
 
         if not categories:
-            print("No data found for this period.")
+            print(f"No data found for {target_prefix if target_prefix else 'all time'}.")
             return
 
         plt.figure(figsize=(8, 6))
         plt.pie(categories.values(), labels=categories.keys(), autopct='%1.1f%%', startangle=140)
-        title = f"Spending for {current_month}" if filter_month else "Total Spending"
-        plt.title(title)
+        plt.title(f"Spending: {target_prefix if target_prefix else 'All Time'}")
         plt.show()
 
     except FileNotFoundError:
@@ -58,24 +67,27 @@ def show_chart(filter_month=False):
 
 def main():
     while True:
-        print("\n--- SpendWise: Personal Finance Tracker ---")
+        print("\n--- Kora: Personal Finance Tracker ---")
         print("1. Add Expense")
         print("2. View All-Time Spending")
-        print("3. View This Month's Spending Only")
-        print("4. Exit")
+        print("3. View This Month's Spending")
+        print("4. View Specific Month/Year")
+        print("5. Exit")
         choice = input("Select an option: ")
 
         if choice == '1':
             add_expense()
         elif choice == '2':
-            show_chart(filter_month=False)
+            show_chart(filter_type="all")
         elif choice == '3':
-            show_chart(filter_month=True)
+            show_chart(filter_type="current")
         elif choice == '4':
+            show_chart(filter_type="choose")
+        elif choice == '5':
             print("Goodbye!")
             break
         else:
-            print("Invalid choice, please select 1-4.")
+            print("Invalid choice, please select 1-5.")
 
 
 if __name__ == "__main__":
